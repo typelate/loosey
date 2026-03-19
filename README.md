@@ -2,6 +2,8 @@
 
 Get [pressly/goose](https://github.com/pressly/goose) migrations without transitive dependencies.
 
+You can continue using the `goose` CLI for manual interactions but use loosey for on-webapp-start database migrations.
+
 This is not a Go level drop in replacement. It does support your migrations files but wiring it up to your go app should be simple.
 
 Tested against:

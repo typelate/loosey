@@ -25,7 +25,17 @@ import (
 //go:generate counterfeiter -generate
 
 // Querier is the interface for migration version tracking operations.
-// It is implemented by the dialect-specific packages.
+// It is implemented by the dialect-specific packages in internal/.
+//
+// To use a custom version table name (instead of goose_db_version), copy the
+// schema.sql and queries.sql files from the appropriate internal/ dialect
+// package, replace the table name, generate with sqlc, and pass the result
+// to [New]:
+//
+//	q := mypkg.New(db)
+//	m, err := loosey.New(ctx, db, dir, q, (*mypkg.Queries).WithTx)
+//
+// See custom_querier.md for a full walkthrough.
 type Querier interface {
 	EnsureTable(ctx context.Context) error
 	InsertVersion(ctx context.Context, versionID int64) error
@@ -75,7 +85,7 @@ type Manager[Q Querier] struct {
 // New creates a Manager with a custom dialect. For built-in dialects, use
 // [NewPostgres], [NewSQLite3], [NewMySQL], or [NewLibSQL] instead.
 //
-// The q parameter is a Querier bound to db, and withTx creates a
+// The q parameter is a [Querier] bound to db, and withTx creates a
 // transaction-bound copy (typically a (*Queries).WithTx method expression).
 func New[Q Querier](ctx context.Context, db *sql.DB, dir fs.FS, q Q, withTx WithTx[Q], opts ...Option) (*Manager[Q], error) {
 	m := &Manager[Q]{
