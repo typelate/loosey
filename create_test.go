@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func testMigrationDir(t *testing.T) (*MigrationDirectory, string) {
+func testRoot(t *testing.T) (*os.Root, string) {
 	t.Helper()
 	dir := t.TempDir()
 	root, err := os.OpenRoot(dir)
@@ -16,13 +16,13 @@ func testMigrationDir(t *testing.T) (*MigrationDirectory, string) {
 		t.Fatalf("OpenRoot: %v", err)
 	}
 	t.Cleanup(func() { _ = root.Close() })
-	return NewMigrationDirectory(root), dir
+	return root, dir
 }
 
 func TestCreateMigrationSequential_Empty(t *testing.T) {
-	md, dir := testMigrationDir(t)
+	root, dir := testRoot(t)
 
-	filename, err := CreateMigrationSequential(md, "add_users")
+	filename, err := CreateMigrationSequential(root, "add_users")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -43,10 +43,10 @@ func TestCreateMigrationSequential_Empty(t *testing.T) {
 }
 
 func TestCreateMigrationSequential_Existing(t *testing.T) {
-	md, dir := testMigrationDir(t)
+	root, dir := testRoot(t)
 	_ = os.WriteFile(filepath.Join(dir, "00002_existing.sql"), []byte(""), 0o644)
 
-	filename, err := CreateMigrationSequential(md, "next")
+	filename, err := CreateMigrationSequential(root, "next")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -56,13 +56,13 @@ func TestCreateMigrationSequential_Existing(t *testing.T) {
 }
 
 func TestCreateMigrationTimestamp(t *testing.T) {
-	md, _ := testMigrationDir(t)
+	root, _ := testRoot(t)
 
 	fixed := func() time.Time {
 		return time.Date(2025, 3, 15, 14, 30, 45, 0, time.UTC)
 	}
 
-	filename, err := CreateMigrationTimestamp(md, "add_index", fixed)
+	filename, err := CreateMigrationTimestamp(root, "add_index", fixed)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -72,9 +72,9 @@ func TestCreateMigrationTimestamp(t *testing.T) {
 }
 
 func TestCreateMigrationTimestamp_NilNow(t *testing.T) {
-	md, _ := testMigrationDir(t)
+	root, _ := testRoot(t)
 
-	filename, err := CreateMigrationTimestamp(md, "something", nil)
+	filename, err := CreateMigrationTimestamp(root, "something", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -103,10 +103,11 @@ func TestSanitizeName(t *testing.T) {
 }
 
 func TestCreateMigrationSequential_EmptyName(t *testing.T) {
-	md, _ := testMigrationDir(t)
+	root, _ := testRoot(t)
 
-	_, err := CreateMigrationSequential(md, "!!!")
+	_, err := CreateMigrationSequential(root, "!!!")
 	if err == nil {
 		t.Fatal("expected error for empty sanitized name")
 	}
+	assertErrorContains(t, err, "empty after sanitization")
 }
