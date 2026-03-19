@@ -27,9 +27,9 @@ func startMariaDB(t *testing.T, version string) (db *sql.DB, connStr string) {
 	ctx := context.Background()
 	image := fmt.Sprintf("mariadb:%s", version)
 	container, err := tcmariadb.Run(ctx, image,
-		tcmariadb.WithDatabase("lucy_test"),
-		tcmariadb.WithUsername("lucy"),
-		tcmariadb.WithPassword("lucy"),
+		tcmariadb.WithDatabase("loosey_test"),
+		tcmariadb.WithUsername("loosey"),
+		tcmariadb.WithPassword("loosey"),
 	)
 	testcontainers.CleanupContainer(t, container)
 	require.NoError(t, err)
