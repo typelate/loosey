@@ -3,31 +3,66 @@ package loosey
 import (
 	"fmt"
 	"io"
-	"iter"
 	"os"
 	"strings"
 	"time"
 	"unicode"
 )
 
-// MigrationDir provides listing and creating migration files in a directory.
-type MigrationDir interface {
-	List() iter.Seq[string]
-	Create(name, data string) error
+const migrationSkeleton = "-- +goose Up\n\n-- +goose Down\n"
+
+// CreateMigrationSequential creates a new SQL migration file with a sequential
+// version number. It scans the directory for existing migration files
+// and increments from the highest found version.
+func CreateMigrationSequential(dir *os.Root, name string) (string, error) {
+	sanitized := sanitizeName(name)
+	if sanitized == "" {
+		return "", fmt.Errorf("loosey: migration name is empty after sanitization")
+	}
+
+	var maxVersion int64
+	for filename := range listMigrationFiles(dir) {
+		version, _, err := parseMigrationFilename(filename)
+		if err != nil {
+			continue
+		}
+		if version > maxVersion {
+			maxVersion = version
+		}
+	}
+
+	version := maxVersion + 1
+	filename := fmt.Sprintf("%05d_%s.sql", version, sanitized)
+
+	if err := createFile(dir, filename, migrationSkeleton); err != nil {
+		return "", fmt.Errorf("loosey: creating migration file: %w", err)
+	}
+	return filename, nil
 }
 
-// MigrationDirectory is a MigrationDir backed by *os.Root.
-type MigrationDirectory struct {
-	root *os.Root
+// CreateMigrationTimestamp creates a new SQL migration file with a timestamp
+// version. If now is nil, time.Now is used.
+func CreateMigrationTimestamp(dir *os.Root, name string, now func() time.Time) (string, error) {
+	sanitized := sanitizeName(name)
+	if sanitized == "" {
+		return "", fmt.Errorf("loosey: migration name is empty after sanitization")
+	}
+
+	if now == nil {
+		now = time.Now
+	}
+	version := now().UTC().Format("20060102150405")
+	filename := fmt.Sprintf("%s_%s.sql", version, sanitized)
+
+	if err := createFile(dir, filename, migrationSkeleton); err != nil {
+		return "", fmt.Errorf("loosey: creating migration file: %w", err)
+	}
+	return filename, nil
 }
 
-func NewMigrationDirectory(root *os.Root) *MigrationDirectory {
-	return &MigrationDirectory{root: root}
-}
-
-func (d MigrationDirectory) List() iter.Seq[string] {
+func listMigrationFiles(dir *os.Root) func(yield func(string) bool) {
 	return func(yield func(string) bool) {
-		f, err := d.root.Open(".")
+		f, err := dir.Open(".")
 		if err != nil {
 			return
 		}
@@ -48,8 +83,8 @@ func (d MigrationDirectory) List() iter.Seq[string] {
 	}
 }
 
-func (d MigrationDirectory) Create(name, data string) error {
-	f, err := d.root.Create(name)
+func createFile(dir *os.Root, name, data string) error {
+	f, err := dir.Create(name)
 	if err != nil {
 		return err
 	}
@@ -59,57 +94,6 @@ func (d MigrationDirectory) Create(name, data string) error {
 		return writeErr
 	}
 	return closeErr
-}
-
-const migrationSkeleton = "-- +goose Up\n\n-- +goose Down\n"
-
-// CreateMigrationSequential creates a new SQL migration file with a sequential
-// version number. It scans the directory for existing migration files
-// and increments from the highest found version.
-func CreateMigrationSequential(dir MigrationDir, name string) (string, error) {
-	sanitized := sanitizeName(name)
-	if sanitized == "" {
-		return "", fmt.Errorf("loosey: migration name is empty after sanitization")
-	}
-
-	var maxVersion int64
-	for filename := range dir.List() {
-		version, _, err := parseMigrationFilename(filename)
-		if err != nil {
-			continue
-		}
-		if version > maxVersion {
-			maxVersion = version
-		}
-	}
-
-	version := maxVersion + 1
-	filename := fmt.Sprintf("%05d_%s.sql", version, sanitized)
-
-	if err := dir.Create(filename, migrationSkeleton); err != nil {
-		return "", fmt.Errorf("loosey: creating migration file: %w", err)
-	}
-	return filename, nil
-}
-
-// CreateMigrationTimestamp creates a new SQL migration file with a timestamp
-// version. If now is nil, time.Now is used.
-func CreateMigrationTimestamp(dir MigrationDir, name string, now func() time.Time) (string, error) {
-	sanitized := sanitizeName(name)
-	if sanitized == "" {
-		return "", fmt.Errorf("loosey: migration name is empty after sanitization")
-	}
-
-	if now == nil {
-		now = time.Now
-	}
-	version := now().UTC().Format("20060102150405")
-	filename := fmt.Sprintf("%s_%s.sql", version, sanitized)
-
-	if err := dir.Create(filename, migrationSkeleton); err != nil {
-		return "", fmt.Errorf("loosey: creating migration file: %w", err)
-	}
-	return filename, nil
 }
 
 func sanitizeName(name string) string {
