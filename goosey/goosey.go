@@ -9,8 +9,6 @@ import (
 
 // Run runs the full migration lifecycle test suite against the given Manager.
 func Run[Q loosey.Querier](t *testing.T, m *loosey.Manager[Q]) {
-	t.Helper()
-
 	t.Run("Up", func(t *testing.T) {
 		results, err := m.Up(context.Background())
 		if err != nil {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -76,6 +78,29 @@ func TestNewManager_WithEnv(t *testing.T) {
 	}
 	if len(m.migrations) != 1 {
 		t.Fatalf("got %d migrations, want 1", len(m.migrations))
+	}
+}
+
+func TestSchemaIsSubstringOfQueries(t *testing.T) {
+	schemaFiles, err := filepath.Glob(filepath.FromSlash("internal/*/schema.sql"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range schemaFiles {
+		pkg := filepath.Dir(p)
+		t.Run(pkg, func(t *testing.T) {
+			schema, err := os.ReadFile(filepath.Join(pkg, "schema.sql"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			queries, err := os.ReadFile(filepath.Join(pkg, "queries.sql"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(queries), string(schema)) {
+				t.Errorf("schema.sql is not a substring of queries.sql for %s", p)
+			}
+		})
 	}
 }
 
