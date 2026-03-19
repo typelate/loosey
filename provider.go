@@ -5,7 +5,7 @@
 // Create a manager for your database, point it at your migrations directory,
 // and call Up:
 //
-//	m, err := loosey.NewPostgres(db, os.DirFS("migrations"))
+//	m, err := loosey.NewPostgres(ctx, db, os.DirFS("migrations"))
 //	results, err := m.Up(ctx)
 //
 // Supported databases: PostgreSQL, SQLite, MySQL/MariaDB, and libsql/Turso.
