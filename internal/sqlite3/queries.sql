@@ -1,0 +1,25 @@
+-- name: EnsureTable :exec
+CREATE TABLE IF NOT EXISTS goose_db_version (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    version_id INTEGER NOT NULL,
+    is_applied INTEGER NOT NULL,
+    tstamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- name: InsertVersion :exec
+INSERT INTO goose_db_version (version_id, is_applied, tstamp)
+VALUES (?, 1, CURRENT_TIMESTAMP);
+
+-- name: DeleteVersion :exec
+DELETE FROM goose_db_version WHERE version_id = ?;
+
+-- name: ListApplied :many
+SELECT DISTINCT version_id
+FROM goose_db_version
+WHERE is_applied = 1
+ORDER BY version_id;
+
+-- name: LatestVersion :one
+SELECT CAST(COALESCE(MAX(version_id), 0) AS INTEGER) AS version_id
+FROM goose_db_version
+WHERE is_applied = 1;

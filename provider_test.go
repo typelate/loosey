@@ -1,0 +1,92 @@
+package loosey
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"testing"
+	"testing/fstest"
+
+	"github.com/typelate/loosey/internal/fake"
+)
+
+func TestNewManager(t *testing.T) {
+	fq := new(fake.Querier)
+	dir := fstest.MapFS{
+		"00001_init.sql": &fstest.MapFile{Data: []byte("-- +goose Up\nCREATE TABLE t (id INT);\n")},
+	}
+
+	m, err := New(context.Background(), nil, dir, fq, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if m == nil {
+		t.Fatal("manager is nil")
+	}
+	if len(m.migrations) != 1 {
+		t.Fatalf("got %d migrations, want 1", len(m.migrations))
+	}
+	if fq.EnsureTableCallCount() != 1 {
+		t.Errorf("EnsureTable called %d times, want 1", fq.EnsureTableCallCount())
+	}
+}
+
+func TestNewManager_ParseError(t *testing.T) {
+	fq := new(fake.Querier)
+	dir := fstest.MapFS{
+		"00001_bad.sql": &fstest.MapFile{Data: []byte("no annotations here")},
+	}
+
+	_, err := New(context.Background(), nil, dir, fq, nil)
+	if err == nil {
+		t.Fatal("expected error for bad SQL, got nil")
+	}
+	var pe *ParseError
+	if !errors.As(err, &pe) {
+		t.Fatalf("expected *ParseError, got %T", err)
+	}
+	if !strings.Contains(pe.Error(), "00001_bad.sql") {
+		t.Errorf("ParseError.Error() = %q, want source file in message", pe.Error())
+	}
+}
+
+func TestNewManager_EnsureTableError(t *testing.T) {
+	fq := new(fake.Querier)
+	fq.EnsureTableReturns(fmt.Errorf("db error"))
+	dir := fstest.MapFS{
+		"00001_init.sql": &fstest.MapFile{Data: []byte("-- +goose Up\nCREATE TABLE t (id INT);\n")},
+	}
+
+	_, err := New(context.Background(), nil, dir, fq, nil)
+	if err == nil {
+		t.Fatal("expected error when EnsureTable fails, got nil")
+	}
+}
+
+func TestNewManager_WithEnv(t *testing.T) {
+	fq := new(fake.Querier)
+	dir := fstest.MapFS{
+		"00001_init.sql": &fstest.MapFile{Data: []byte("-- +goose Up\n-- +goose ENVSUB ON\nCREATE TABLE ${TBL} (id INT);\n")},
+	}
+
+	m, err := New(context.Background(), nil, dir, fq, nil, WithEnv([]string{"TBL=users"}))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(m.migrations) != 1 {
+		t.Fatalf("got %d migrations, want 1", len(m.migrations))
+	}
+}
+
+func TestNewManager_EnvsubNoEnv(t *testing.T) {
+	fq := new(fake.Querier)
+	dir := fstest.MapFS{
+		"00001_init.sql": &fstest.MapFile{Data: []byte("-- +goose Up\n-- +goose ENVSUB ON\nCREATE TABLE ${TBL} (id INT);\n")},
+	}
+
+	_, err := New(context.Background(), nil, dir, fq, nil)
+	if err == nil {
+		t.Fatal("expected error when ENVSUB ON without WithEnv, got nil")
+	}
+}

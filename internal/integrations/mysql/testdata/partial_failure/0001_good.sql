@@ -1,0 +1,5 @@
+-- +goose Up
+CREATE TABLE widgets (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL);
+
+-- +goose Down
+DROP TABLE widgets;

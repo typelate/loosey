@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS goose_db_version (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    version_id INTEGER NOT NULL,
+    is_applied INTEGER NOT NULL,
+    tstamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

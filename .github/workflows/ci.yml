@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Test
+        run: |
+          go test -race -shuffle=on ./...

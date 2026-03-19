@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS goose_db_version (
+    id         BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    version_id BIGINT NOT NULL,
+    is_applied BOOLEAN NOT NULL,
+    tstamp     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
