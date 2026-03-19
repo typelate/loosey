@@ -12,6 +12,55 @@ import (
 )
 
 // NewPostgres creates a Manager for PostgreSQL databases.
+//
+// If you are using pgxpool, use [stdlib.OpenDBFromPool] to obtain a *sql.DB:
+//
+//	package main
+//
+//	import (
+//		"context"
+//		"embed"
+//		"fmt"
+//		"io/fs"
+//		"log"
+//		"os"
+//
+//		"github.com/jackc/pgx/v5/pgxpool"
+//		"github.com/jackc/pgx/v5/stdlib"
+//
+//		"github.com/typelate/loosey"
+//	)
+//
+//	//go:embed migrations/*.sql
+//	var migrations embed.FS
+//
+//	func main() {
+//		ctx := context.Background()
+//		pool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//		defer pool.Close()
+//		db := stdlib.OpenDBFromPool(pool)
+//		defer db.Close()
+//		dir, err := fs.Sub(migrations, "migrations")
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//		m, err := loosey.NewPostgres(ctx, db, dir)
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//		results, err := m.Up(ctx)
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//		for _, r := range results {
+//			fmt.Printf("applied %s (%s)\n", r.Source, r.Duration)
+//		}
+//	}
+//
+// [stdlib.OpenDBFromPool]: https://pkg.go.dev/github.com/jackc/pgx/v5/stdlib#OpenDBFromPool
 func NewPostgres(ctx context.Context, db *sql.DB, dir fs.FS, opts ...Option) (*Manager[*postgres.Queries], error) {
 	return New(ctx, db, dir, postgres.New(db), (*postgres.Queries).WithTx, opts...)
 }
