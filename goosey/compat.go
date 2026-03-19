@@ -80,27 +80,27 @@ func parseGooseVersion(output string) int64 {
 	return 0
 }
 
-// AssertVersionsAgree checks that goose version, lucy Version, and querier LatestVersion all match.
+// AssertVersionsAgree checks that goose version, loosey Version, and querier LatestVersion all match.
 func AssertVersionsAgree(t *testing.T, m Migrator, cfg Compat) {
 	t.Helper()
 	ctx := t.Context()
 
 	gooseV := cfg.GooseVersion(t)
-	lucyV, err := m.Version(ctx)
+	looseyV, err := m.Version(ctx)
 	if err != nil {
-		t.Fatalf("lucy Version: %v", err)
+		t.Fatalf("loosey Version: %v", err)
 	}
-	if gooseV != lucyV {
-		t.Errorf("version mismatch: goose=%d lucy=%d", gooseV, lucyV)
+	if gooseV != looseyV {
+		t.Errorf("version mismatch: goose=%d loosey=%d", gooseV, looseyV)
 	}
 }
 
-// AssertAllApplied checks that lucy reports all migrations as applied.
+// AssertAllApplied checks that loosey reports all migrations as applied.
 func AssertAllApplied(t *testing.T, m Migrator) {
 	t.Helper()
 	statuses, err := m.Status(t.Context())
 	if err != nil {
-		t.Fatalf("lucy Status: %v", err)
+		t.Fatalf("loosey Status: %v", err)
 	}
 	for _, s := range statuses {
 		if !s.Applied {
@@ -109,7 +109,7 @@ func AssertAllApplied(t *testing.T, m Migrator) {
 	}
 }
 
-// GooseBefore tests lucy interacting with a database where goose applied migrations first.
+// GooseBefore tests loosey interacting with a database where goose applied migrations first.
 // newMigrator is called after goose has set up the table to avoid EnsureTable conflicts.
 // The database should be clean when called.
 func GooseBefore(t *testing.T, newMigrator func() Migrator, cfg Compat) {
@@ -121,46 +121,46 @@ func GooseBefore(t *testing.T, newMigrator func() Migrator, cfg Compat) {
 
 	m := newMigrator()
 
-	t.Log("lucy reads all applied")
+	t.Log("loosey reads all applied")
 	AssertAllApplied(t, m)
 	AssertVersionsAgree(t, m, cfg)
 
 	t.Log("goose down")
 	cfg.GooseDown(t)
 
-	t.Log("lucy sees pending")
+	t.Log("loosey sees pending")
 	AssertHasPending(t, m)
 	AssertVersionsAgree(t, m, cfg)
 
-	t.Log("lucy reapplies")
+	t.Log("loosey reapplies")
 	_, err := m.Up(ctx)
 	if err != nil {
-		t.Fatalf("lucy Up: %v", err)
+		t.Fatalf("loosey Up: %v", err)
 	}
 	AssertAllApplied(t, m)
 	AssertVersionsAgree(t, m, cfg)
 }
 
-// GooseAfter tests goose interacting with a database where lucy applied migrations first.
+// GooseAfter tests goose interacting with a database where loosey applied migrations first.
 // The database should be clean when called.
 func GooseAfter(t *testing.T, m Migrator, cfg Compat) {
 	t.Helper()
 	ctx := t.Context()
 
-	t.Log("lucy up")
+	t.Log("loosey up")
 	_, err := m.Up(ctx)
 	if err != nil {
-		t.Fatalf("lucy Up: %v", err)
+		t.Fatalf("loosey Up: %v", err)
 	}
 	AssertAllApplied(t, m)
 
 	t.Log("goose reads all")
 	AssertVersionsAgree(t, m, cfg)
 
-	t.Log("lucy down")
+	t.Log("loosey down")
 	_, err = m.Down(ctx)
 	if err != nil {
-		t.Fatalf("lucy Down: %v", err)
+		t.Fatalf("loosey Down: %v", err)
 	}
 	AssertVersionsAgree(t, m, cfg)
 
@@ -170,12 +170,12 @@ func GooseAfter(t *testing.T, m Migrator, cfg Compat) {
 	AssertVersionsAgree(t, m, cfg)
 }
 
-// AssertHasPending checks that lucy reports at least one pending migration.
+// AssertHasPending checks that loosey reports at least one pending migration.
 func AssertHasPending(t *testing.T, m Migrator) {
 	t.Helper()
 	statuses, err := m.Status(t.Context())
 	if err != nil {
-		t.Fatalf("lucy Status: %v", err)
+		t.Fatalf("loosey Status: %v", err)
 	}
 	for _, s := range statuses {
 		if !s.Applied {

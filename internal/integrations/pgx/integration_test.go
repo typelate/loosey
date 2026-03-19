@@ -29,9 +29,9 @@ func startPostgres(t *testing.T, version int) (db *sql.DB, connStr string) {
 	ctx := context.Background()
 	image := fmt.Sprintf("postgres:%d", version)
 	container, err := tcpostgres.Run(ctx, image,
-		tcpostgres.WithDatabase("lucy_test"),
-		tcpostgres.WithUsername("lucy"),
-		tcpostgres.WithPassword("lucy"),
+		tcpostgres.WithDatabase("loosey_test"),
+		tcpostgres.WithUsername("loosey"),
+		tcpostgres.WithPassword("loosey"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").WithOccurrence(2),
 		),
