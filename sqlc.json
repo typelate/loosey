@@ -1,0 +1,71 @@
+{
+  "version": "2",
+  "sql": [
+    {
+      "name": "postgresql",
+      "engine": "postgresql",
+      "schema": "internal/postgres/schema.sql",
+      "queries": "internal/postgres/queries.sql",
+      "gen": {
+        "go": {
+          "package": "postgres",
+          "out": "internal/postgres"
+        }
+      }
+    },
+    {
+      "name":  "sqlite",
+      "engine": "sqlite",
+      "schema": "internal/sqlite3/schema.sql",
+      "queries": "internal/sqlite3/queries.sql",
+      "gen": {
+        "go": {
+          "package": "sqlite3",
+          "out": "internal/sqlite3",
+          "overrides": [
+            {
+              "column": "goose_db_version.version_id",
+              "go_type": "int64"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name":  "mysql",
+      "engine": "mysql",
+      "schema": "internal/mysql/schema.sql",
+      "queries": "internal/mysql/queries.sql",
+      "gen": {
+        "go": {
+          "package": "mysql",
+          "out": "internal/mysql",
+          "overrides": [
+            {
+              "column": "goose_db_version.version_id",
+              "go_type": "int64"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name":  "libsql",
+      "engine": "sqlite",
+      "schema": "internal/libsql/schema.sql",
+      "queries": "internal/libsql/queries.sql",
+      "gen": {
+        "go": {
+          "package": "libsql",
+          "out": "internal/libsql",
+          "overrides": [
+            {
+              "column": "goose_db_version.version_id",
+              "go_type": "int64"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -2,10 +2,10 @@ package loosey
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -82,23 +82,32 @@ func TestNewManager_WithEnv(t *testing.T) {
 }
 
 func TestSchemaIsSubstringOfQueries(t *testing.T) {
-	schemaFiles, err := filepath.Glob(filepath.FromSlash("internal/*/schema.sql"))
+	var config struct {
+		SQL []struct {
+			Name    string `json:"name"`
+			Schema  string `json:"schema"`
+			Queries string `json:"queries"`
+		} `json:"sql"`
+	}
+	configData, err := os.ReadFile("sqlc.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, p := range schemaFiles {
-		pkg := filepath.Dir(p)
-		t.Run(pkg, func(t *testing.T) {
-			schema, err := os.ReadFile(filepath.Join(pkg, "schema.sql"))
+	if err := json.Unmarshal(configData, &config); err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range config.SQL {
+		t.Run(entry.Name, func(t *testing.T) {
+			schema, err := os.ReadFile(entry.Schema)
 			if err != nil {
 				t.Fatal(err)
 			}
-			queries, err := os.ReadFile(filepath.Join(pkg, "queries.sql"))
+			queries, err := os.ReadFile(entry.Queries)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !strings.Contains(string(queries), string(schema)) {
-				t.Errorf("schema.sql is not a substring of queries.sql for %s", p)
+				t.Errorf("schema.sql is not a substring of queries.sql for %s", entry.Schema)
 			}
 		})
 	}
