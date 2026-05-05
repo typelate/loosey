@@ -6,7 +6,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.42.0
-	github.com/testcontainers/testcontainers-go/modules/mariadb v0.41.0
+	github.com/testcontainers/testcontainers-go/modules/mariadb v0.42.0
 	github.com/typelate/loosey v0.0.0
 )
 
