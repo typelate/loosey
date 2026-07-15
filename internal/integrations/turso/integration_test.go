@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	_ "github.com/tursodatabase/go-libsql"
+	_ "turso.tech/database/tursogo"
 
 	"github.com/typelate/loosey"
 	"github.com/typelate/loosey/goosey"
@@ -18,8 +18,12 @@ var migrationsDir = filepath.FromSlash("testdata/migrations")
 func openLibSQL(t *testing.T) (*sql.DB, string) {
 	t.Helper()
 	dbPath := filepath.Join(t.TempDir(), "test.db")
-	db, err := sql.Open("libsql", "file:"+dbPath)
+	db, err := sql.Open("turso", dbPath)
 	require.NoError(t, err)
+	// The turso engine locks the database file for as long as a connection is
+	// open. Keep no idle connections so the goose CLI (a separate process) can
+	// access the file between loosey operations.
+	db.SetMaxIdleConns(0)
 	t.Cleanup(func() { _ = db.Close() })
 	return db, dbPath
 }
