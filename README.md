@@ -4,7 +4,7 @@ Get [pressly/goose](https://github.com/pressly/goose) migrations without transit
 
 You can continue using the `goose` CLI for manual intervention but consider using `loosey` in your app.
 
-This is not an import path swap drop in replacement. You will need to change the migration runner call site a bit but existing sql migrations should just work.
+This is not a drop-in replacement that can be adopted by changing only the import path. You will need to change the migration runner call site slightly, but existing SQL migrations should work as-is.
 
 Tested against:
 - PostgreSQL: 16, 17, 18
