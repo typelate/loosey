@@ -4,7 +4,7 @@ Get [pressly/goose](https://github.com/pressly/goose) migrations without transit
 
 You can continue using the `goose` CLI for manual intervention but consider using `loosey` in your app.
 
-This is not a Go level drop in replacement. It does support your migrations files but wiring it up to your go app should be simple.
+This is not an import path swap drop in replacement. You will need to change the migration runner call site a bit but existing sql migrations should just work.
 
 Tested against:
 - PostgreSQL: 16, 17, 18
